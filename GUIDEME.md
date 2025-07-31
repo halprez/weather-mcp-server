@@ -65,14 +65,18 @@ cd weather-mcp-project
 # Initialize Git repository
 git init
 
+# Install uv (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+# Or with pip: pip install uv
+
 # Create virtual environment
-python -m venv venv
+uv venv
 
 # Activate virtual environment
 # On Windows:
-venv\Scripts\activate
+.venv\Scripts\activate
 # On Mac/Linux:
-source venv/bin/activate
+source .venv/bin/activate
 
 # Create basic project structure
 mkdir weather_mcp
@@ -100,6 +104,7 @@ __pycache__/
 *.so
 .Python
 venv/
+.venv/
 env/
 ENV/
 
@@ -264,7 +269,7 @@ loguru==0.7.2
 #### 2.2 Install Dependencies
 ```bash
 # Install all packages
-pip install -r requirements.txt
+uv pip install -r requirements.txt
 
 # Verify installation
 python -c "import openmeteo_requests; print('✅ Weather APIs installed')"

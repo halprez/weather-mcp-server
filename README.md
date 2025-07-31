@@ -81,7 +81,7 @@ This project creates a next-generation weather data platform that seamlessly int
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.9+
+- Python 3.10+ (recommended: 3.10 for best package compatibility)
 - EUMETSAT API credentials (Consumer Key/Secret)
 - Docker (optional)
 
@@ -92,13 +92,17 @@ This project creates a next-generation weather data platform that seamlessly int
 git clone https://github.com/your-username/weather-mcp-project.git
 cd weather-mcp-project
 
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+# Install uv (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+# Or with pip: pip install uv
+
+# Create virtual environment with Python 3.10 (recommended for compatibility)
+uv venv --python 3.10
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 
 # Install dependencies
-pip install -r requirements.txt
-pip install -e .
+uv pip install -r requirements.txt
+uv pip install -e .
 ```
 
 ### Environment Setup
@@ -343,7 +347,7 @@ docker-compose up --scale mcp-server=3
 ### Development Setup
 ```bash
 # Install development dependencies
-pip install -r requirements-dev.txt
+uv pip install -r requirements-dev.txt
 
 # Install pre-commit hooks
 pre-commit install
