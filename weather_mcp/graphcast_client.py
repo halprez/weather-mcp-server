@@ -1,5 +1,5 @@
 """
-GraphCast Client - Day 4
+GraphCast Client
 Connect to real GraphCast AI weather predictions via Open-Meteo
 """
 
@@ -10,10 +10,9 @@ from typing import Dict, List, Tuple, Optional
 
 class GraphCastClient:
     """
-    Your GraphCast AI Weather Client!
+    GraphCast AI Weather Client!
     
     This connects to Google's GraphCast AI model via Open-Meteo API
-    GraphCast is 90% more accurate than traditional weather models!
     """
     
     def __init__(self):
@@ -225,7 +224,7 @@ async def test_graphcast_client():
             print("✅ GraphCast 7-day forecast received!")
             print(f"📍 Location: {forecast['location']['latitude']}, {forecast['location']['longitude']}")
             print(f"🏔️  Elevation: {forecast['location']['elevation']}m")
-            print(f"📊 Total data points: {len(forecast['hourly_data'])}")            
+            print(f"📊 Total data points: {len(forecast['hourly_data'])}")            cl
             print("\n📅 7-Day Weather Forecast:")
             daily_data = client._aggregate_daily_data(forecast['hourly_data'])
             
