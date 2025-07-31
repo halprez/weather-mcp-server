@@ -12,7 +12,7 @@ This project creates a next-generation weather data platform that seamlessly int
 ### 🎯 Key Features
 
 - **🛰️ Historical Precision**: EUMETSAT satellite data (MSG/SEVIRI, Meteosat) with comprehensive historical coverage.
-- **🧠 AI-Powered Forecasts**: Google GraphCast integration providing 90% better accuracy than traditional models.
+- **🧠 AI-Powered Forecasts**: Google GraphCast integration
 - **⚡ Ultra-Fast Processing**: 10-day forecasts in under 1 minute vs 50+ minutes for traditional NWP models.
 - **🔗 Seamless Integration**: Unified timeline combining historical observations with AI predictions.
 - **🤖 MCP-Native**: Built for AI agents and LLM integration from the ground up.
@@ -152,7 +152,6 @@ asyncio.run(demo())
 ## 📊 Performance Metrics
 
 ### GraphCast AI Model Performance
-- **🎯 Accuracy**: 90% better than ECMWF HRES on 1380+ test variables
 - **🏃 Speed**: <1 minute for 10-day forecasts vs 50+ minutes traditional
 - **🔍 Resolution**: 0.25° spatial resolution globally
 - **📈 Troposphere**: 99.7% superior performance in critical atmospheric layers
