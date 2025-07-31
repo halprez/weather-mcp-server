@@ -21,6 +21,12 @@ class GraphCastClient:
         self.base_url = "https://api.open-meteo.com/v1/forecast"
         print("🧠 GraphCast Client initialized!")
         
+    async def get_7day_forecast(self, 
+                               latitude: float, 
+                               longitude: float) -> Dict:
+        """Get 7-day forecast focusing on temperature, precipitation, and humidity"""
+        return await self.get_forecast(latitude, longitude, days=7)
+    
     async def get_forecast(self, 
                           latitude: float, 
                           longitude: float, 
@@ -84,29 +90,22 @@ class GraphCastClient:
         hourly = response.Hourly()
         hourly_data = []
         
-        # Get time range
-        for i in range(24):  # First 24 hours for example
-            try:
-                timestamp = datetime.utcfromtimestamp(
-                    hourly.Time() + i * hourly.Interval()
-                )
-                
-                # Extract weather variables
-                weather_point = {
-                    "time": timestamp.isoformat(),
-                    "temperature": self._safe_get_value(hourly, i, "temperature_2m"),
-                    "humidity": self._safe_get_value(hourly, i, "relative_humidity_2m"),
-                    "precipitation": self._safe_get_value(hourly, i, "precipitation"),
-                    "wind_speed": self._safe_get_value(hourly, i, "wind_speed_10m"),
-                    "wind_direction": self._safe_get_value(hourly, i, "wind_direction_10m"),
-                    "pressure": self._safe_get_value(hourly, i, "surface_pressure")
-                }
-                
-                hourly_data.append(weather_point)
-                
-            except IndexError:
-                # No more data available
-                break
+        # Extract all available data points
+        time_range = self._get_time_range(hourly)
+        variables = self._get_variable_data(hourly)
+        
+        for i, timestamp in enumerate(time_range):
+            weather_point = {
+                "time": timestamp.isoformat(),
+                "temperature": self._safe_extract_value(variables, i, 0),  # temperature_2m
+                "humidity": self._safe_extract_value(variables, i, 1),     # relative_humidity_2m
+                "precipitation": self._safe_extract_value(variables, i, 2), # precipitation
+                "wind_speed": self._safe_extract_value(variables, i, 3),   # wind_speed_10m
+                "wind_direction": self._safe_extract_value(variables, i, 4), # wind_direction_10m
+                "pressure": self._safe_extract_value(variables, i, 5)      # surface_pressure
+            }
+            
+            hourly_data.append(weather_point)
         
         return {
             "location": location_info,
@@ -120,42 +119,127 @@ class GraphCastClient:
             }
         }
     
-    def _safe_get_value(self, hourly, index: int, variable: str):
-        """Safely extract value from hourly data"""
+    def _get_time_range(self, hourly) -> List[datetime]:
+        """Extract time range from hourly data"""
         try:
-            # This is a simplified version - you'd need to map variable names
-            # to the actual Open-Meteo response structure
-            return 20.0 + index * 0.5  # Mock value for now
-        except:
+            start_time = hourly.Time()
+            interval = hourly.Interval()
+            # Get data length from first variable
+            data_length = len(hourly.Variables(0).ValuesAsNumpy()) if hourly.VariablesLength() > 0 else 0
+            
+            return [
+                datetime.utcfromtimestamp(start_time + i * interval)
+                for i in range(data_length)
+            ]
+        except Exception:
+            return []
+    
+    def _get_variable_data(self, hourly) -> List:
+        """Extract variable data arrays from hourly response"""
+        variables = []
+        for i in range(hourly.VariablesLength()):
+            variable = hourly.Variables(i)
+            variables.append(variable.ValuesAsNumpy())
+        return variables
+    
+    def _safe_extract_value(self, variables: List, time_index: int, var_index: int) -> Optional[float]:
+        """Safely extract value from variable array"""
+        try:
+            if var_index >= len(variables) or time_index >= len(variables[var_index]):
+                return None
+            value = float(variables[var_index][time_index])
+            return None if value != value else value  # Check for NaN
+        except (TypeError, ValueError, IndexError):
             return None
+    
+    def _aggregate_daily_data(self, hourly_data: List[Dict]) -> Dict:
+        """Aggregate hourly data into daily summaries"""
+        from collections import defaultdict
+        
+        daily_data = defaultdict(lambda: {
+            'temperatures': [],
+            'precipitation': [],
+            'humidity': []
+        })
+        
+        # Group data by day
+        for point in hourly_data:
+            day = point['time'][:10]  # YYYY-MM-DD
+            
+            if point['temperature'] is not None:
+                daily_data[day]['temperatures'].append(point['temperature'])
+            if point['precipitation'] is not None:
+                daily_data[day]['precipitation'].append(point['precipitation'])
+            if point['humidity'] is not None:
+                daily_data[day]['humidity'].append(point['humidity'])
+        
+        # Calculate daily summaries
+        summary = {}
+        for day, data in daily_data.items():
+            summary[day] = {
+                'temp_min': min(data['temperatures']) if data['temperatures'] else None,
+                'temp_max': max(data['temperatures']) if data['temperatures'] else None,
+                'precipitation': sum(data['precipitation']) if data['precipitation'] else None,
+                'avg_humidity': sum(data['humidity']) / len(data['humidity']) if data['humidity'] else None
+            }
+            
+            # Round values
+            if summary[day]['temp_min'] is not None:
+                summary[day]['temp_min'] = round(summary[day]['temp_min'], 1)
+            if summary[day]['temp_max'] is not None:
+                summary[day]['temp_max'] = round(summary[day]['temp_max'], 1)
+            if summary[day]['precipitation'] is not None:
+                summary[day]['precipitation'] = round(summary[day]['precipitation'], 1)
+            if summary[day]['avg_humidity'] is not None:
+                summary[day]['avg_humidity'] = round(summary[day]['avg_humidity'], 1)
+        
+        return dict(sorted(summary.items()))
 
 # Test the GraphCast client
 async def test_graphcast_client():
     """Test our GraphCast client"""
     print("🧪 Testing GraphCast Client")
-    print("=" * 30)
+    print("=" * 40)
     
     client = GraphCastClient()
     
-    try:
-        # Test forecast for Canary Islands
-        forecast = await client.get_forecast(28.2916, -16.6291, days=3)
-        
-        print("✅ GraphCast forecast received!")
-        print(f"📍 Location: {forecast['location']['latitude']}, {forecast['location']['longitude']}")
-        print(f"🏔️  Elevation: {forecast['location']['elevation']}m")
-        print(f"📊 Data points: {len(forecast['hourly_data'])}")
-        print(f"🧠 Model: {forecast['metadata']['model']}")
-        print(f"🎯 Accuracy: {forecast['metadata']['accuracy']}")
-        
-        # Show first few data points
-        print("\n📈 Sample forecast data:")
-        for i, point in enumerate(forecast['hourly_data'][:3]):
-            print(f"  {i+1}. {point['time'][:16]} - {point['temperature']}°C")
+    # Canary Islands coordinates
+    canary_islands = [
+        {"name": "Gran Canaria (Las Palmas)", "lat": 28.2916, "lon": -16.6291},
+        {"name": "Tenerife (Santa Cruz)", "lat": 28.4636, "lon": -16.2518},
+        {"name": "Lanzarote (Arrecife)", "lat": 28.9630, "lon": -13.5476},
+        {"name": "Fuerteventura", "lat": 28.3587, "lon": -14.0530},
+        {"name": "La Palma", "lat": 28.6839, "lon": -17.7648},
+        {"name": "La Gomera", "lat": 28.0914, "lon": -17.1133},
+        {"name": "El Hierro", "lat": 27.7370, "lon": -17.9155}
+    ]
+    
+    for island in canary_islands:
+        try:
+            print(f"\n🏝️  Testing {island['name']}")
+            print("-" * 30)
             
-    except Exception as e:
-        print(f"❌ Test failed: {e}")
-        print("🛠️  Let's debug this together!")
+            # Get 7-day forecast for this island
+            forecast = await client.get_7day_forecast(island['lat'], island['lon'])
+            
+            print("✅ GraphCast 7-day forecast received!")
+            print(f"📍 Location: {forecast['location']['latitude']}, {forecast['location']['longitude']}")
+            print(f"🏔️  Elevation: {forecast['location']['elevation']}m")
+            print(f"📊 Total data points: {len(forecast['hourly_data'])}")            
+            print("\n📅 7-Day Weather Forecast:")
+            daily_data = client._aggregate_daily_data(forecast['hourly_data'])
+            
+            for day, data in daily_data.items():
+                temp_min = data['temp_min'] if data['temp_min'] is not None else 'N/A'
+                temp_max = data['temp_max'] if data['temp_max'] is not None else 'N/A'
+                precip = data['precipitation'] if data['precipitation'] is not None else 'N/A'
+                humidity = data['avg_humidity'] if data['avg_humidity'] is not None else 'N/A'
+                
+                print(f"  {day}: 🌡️  {temp_min}°C - {temp_max}°C | 🌧️  {precip}mm | 💧 {humidity}%")
+                
+        except Exception as e:
+            print(f"❌ Test failed for {island['name']}: {e}")
+            print("🛠️  Let's debug this together!")
 
 if __name__ == "__main__":
     asyncio.run(test_graphcast_client())
