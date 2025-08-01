@@ -1,4 +1,4 @@
-# Weather MCP Project - AI-Enhanced Meteorological Data Platform
+# Weather MCP Project - AI-Enhanced Meteorological Data Service
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -123,9 +123,81 @@ MCP_SERVER_HOST=localhost
 MCP_SERVER_PORT=8080
 ```
 
-### Basic Usage
+## 🖥️ Claude Desktop Integration
 
-You'll need to learn [how to use Claude Desktop](https://modelcontextprotocol.io/quickstart/user) to connect this MCP Weather Service.
+### Step 1: Configure Claude Desktop
+
+Create or edit the MCP configuration file:
+
+**Linux/Debian:**
+```bash
+~/.config/Claude/claude_desktop_config.json
+```
+
+**macOS:**
+```bash
+~/Library/Application Support/Claude/claude_desktop_config.json
+```
+
+**Windows:**
+```bash
+%APPDATA%\Claude\claude_desktop_config.json
+```
+
+### Step 2: Add Weather MCP Server
+
+Add this configuration to the file:
+
+```json
+{
+  "mcpServers": {
+    "weather-mcp": {
+      "command": "/home/alex/src/weather-mcp-server/.venv/bin/python",
+      "args": ["/home/alex/src/weather-mcp-server/weather_mcp/mcp_server_v2.py"],
+      "env": {
+        "EUMETSAT_CONSUMER_KEY": "your_key_here",
+        "EUMETSAT_CONSUMER_SECRET": "your_secret_here"
+      }
+    }
+  }
+}
+```
+
+**Important:** Update the paths to match your actual installation directory!
+
+### Step 3: Restart Claude Desktop
+
+Close and reopen Claude Desktop for the changes to take effect.
+
+### Step 4: Test the Integration
+
+Ask Claude Desktop natural weather questions:
+
+- **"What's the weather forecast for the Canary Islands?"**
+- **"Get me a 7-day forecast for latitude 28.29, longitude -16.63"**
+- **"Show me the weather timeline for Las Palmas - past week and next week"**
+- **"What was the weather like in the Canary Islands last week?"**
+
+### Available MCP Tools
+
+Your weather MCP server provides three tools:
+
+1. **`get_graphcast_forecast`** - AI-powered weather forecasts (1-16 days)
+2. **`get_historical_weather`** - Historical satellite data (1-30 days back)  
+3. **`get_complete_weather_timeline`** - Combined historical + forecast data
+
+### Troubleshooting
+
+**Server not connecting?**
+- Check the log file: `~/.config/Claude/logs/mcp-server-weather-mcp.log`
+- Verify Python virtual environment path is correct
+- Ensure all dependencies are installed: `pip install -r requirements.txt`
+
+**Command not found errors?**
+- Use absolute paths in the configuration
+- On Debian/Linux, use `python3` or full venv path instead of `python`
+
+### Basic Usage (Programmatic)
 
 ```python
 from weather_mcp import WeatherMCPServer
