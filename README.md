@@ -9,6 +9,10 @@
 
 This project creates a next-generation weather data platform that seamlessly integrates **historical meteorological data** from EUMETSAT with **AI-powered weather forecasts** from Google's GraphCast model. Built on the Model Context Protocol (MCP), it provides intelligent weather analysis capabilities through a unified API.
 
+### Key Concepts
+
+MCP is awesome!! Follow [MCP official documentation](https://modelcontextprotocol.io/docs/learn/architecture) to get ready.
+
 ### 🎯 Key Features
 
 - **🛰️ Historical Precision**: EUMETSAT satellite data (MSG/SEVIRI, Meteosat) with comprehensive historical coverage.
@@ -82,14 +86,15 @@ This project creates a next-generation weather data platform that seamlessly int
 
 ### Prerequisites
 - Python 3.10+ (recommended: 3.10 for best package compatibility)
-- EUMETSAT API credentials (Consumer Key/Secret)
+- EUMETSAT API credentials (optioanl Consumer Key/Secret)
 - Docker (optional)
+- [Claudia](https://github.com/getAsterisk/claudia) (optional for Claude Code Mgmnt)
 
 ### Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/weather-mcp-project.git
+git clone https://github.com/halprez/weather-mcp-project.git
 cd weather-mcp-project
 
 # Install uv (if not already installed)
@@ -119,6 +124,8 @@ MCP_SERVER_PORT=8080
 ```
 
 ### Basic Usage
+
+You'll need to learn [how to use Claude Desktop](https://modelcontextprotocol.io/quickstart/user) to connect this MCP Weather Service.
 
 ```python
 from weather_mcp import WeatherMCPServer

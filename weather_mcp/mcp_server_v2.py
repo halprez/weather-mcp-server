@@ -263,6 +263,9 @@ async def run_mcp_server():
     server = EnhancedWeatherMCPServer()
     
     # Read from stdin line by line
+    # This allows us to handle requests from Claude Desktop or other MCP clients
+    print("🌐 MCP Server is running... (Press Ctrl+C to stop)")
+    print("📥 Listening for requests on stdin...")
     while True:
         try:
             line = sys.stdin.readline()
