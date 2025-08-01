@@ -30,23 +30,58 @@ class EnhancedWeatherMCPServer:
         self.graphcast_client = GraphCastClient()
         self.eumetsat_client = EUMETSATClient()
         
-        print(f"🌟 {self.name} v{self.version} ready!")
-        print("🧠 GraphCast AI: Connected")
-        print("🛰️  EUMETSAT: Connected")
+        # Debug info goes to stderr (not stdout which is for MCP JSON)
+        print(f"🌟 {self.name} v{self.version} ready!", file=sys.stderr)
+        print("🧠 GraphCast AI: Connected", file=sys.stderr)
+        print("🛰️  EUMETSAT: Connected", file=sys.stderr)
         
     async def handle_request(self, request: Dict) -> Dict:
         """Handle MCP requests"""
         method = request.get("method")
         params = request.get("params", {})
+        request_id = request.get("id")
         
-        print(f"📨 MCP Request: {method}")
+        print(f"📨 MCP Request: {method}", file=sys.stderr)
         
-        if method == "tools/list":
-            return await self.list_tools()
+        if method == "initialize":
+            return {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "result": {
+                    "protocolVersion": "2025-06-18",
+                    "capabilities": {
+                        "tools": {}
+                    },
+                    "serverInfo": {
+                        "name": "weather-mcp",
+                        "version": "2.0.0"
+                    }
+                }
+            }
+        elif method == "tools/list":
+            return {
+                "jsonrpc": "2.0", 
+                "id": request_id,
+                "result": await self.list_tools()
+            }
         elif method == "tools/call":
-            return await self.call_tool(params)
+            return {
+                "jsonrpc": "2.0",
+                "id": request_id, 
+                "result": await self.call_tool(params)
+            }
+        elif method == "notifications/initialized":
+            # No response needed for notifications
+            return None
         else:
-            return self.error_response(f"Unknown method: {method}")
+            return {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "error": {
+                    "code": -32601,
+                    "message": f"Method not found: {method}"
+                }
+            }
     
     async def list_tools(self) -> Dict:
         """List all available weather tools"""
@@ -100,7 +135,7 @@ class EnhancedWeatherMCPServer:
         tool_name = params.get("name")
         arguments = params.get("arguments", {})
         
-        print(f"🛠️  Executing: {tool_name}")
+        print(f"🛠️  Executing: {tool_name}", file=sys.stderr)
         
         try:
             if tool_name == "get_graphcast_forecast":
@@ -113,7 +148,7 @@ class EnhancedWeatherMCPServer:
                 return self.error_response(f"Unknown tool: {tool_name}")
                 
         except Exception as e:
-            print(f"❌ Tool error: {e}")
+            print(f"❌ Tool error: {e}", file=sys.stderr)
             return self.error_response(f"Tool execution failed: {str(e)}")
     
     async def get_graphcast_forecast(self, args: Dict) -> Dict:
@@ -193,9 +228,9 @@ class EnhancedWeatherMCPServer:
         days_back = args.get("days_back", 7)
         days_forward = args.get("days_forward", 7)
         
-        print(f"🔄 Creating unified timeline...")
-        print(f"📚 Historical: {days_back} days back")
-        print(f"🔮 Forecast: {days_forward} days forward")
+        print(f"🔄 Creating unified timeline...", file=sys.stderr)
+        print(f"📚 Historical: {days_back} days back", file=sys.stderr)
+        print(f"🔮 Forecast: {days_forward} days forward", file=sys.stderr)
         
         # Get historical data
         end_date = datetime.now()
@@ -246,9 +281,11 @@ class EnhancedWeatherMCPServer:
             ]
         }
     
-    def error_response(self, message: str) -> Dict:
+    def error_response(self, message: str, request_id=None) -> Dict:
         """Return error response"""
         return {
+            "jsonrpc": "2.0",
+            "id": request_id,
             "error": {
                 "code": -1,
                 "message": message
@@ -264,8 +301,8 @@ async def run_mcp_server():
     
     # Read from stdin line by line
     # This allows us to handle requests from Claude Desktop or other MCP clients
-    print("🌐 MCP Server is running... (Press Ctrl+C to stop)")
-    print("📥 Listening for requests on stdin...")
+    print("🌐 MCP Server is running... (Press Ctrl+C to stop)", file=sys.stderr)
+    print("📥 Listening for requests on stdin...", file=sys.stderr)
     while True:
         try:
             line = sys.stdin.readline()
@@ -275,8 +312,9 @@ async def run_mcp_server():
             request = json.loads(line.strip())
             response = await server.handle_request(request)
             
-            # Write response to stdout
-            print(json.dumps(response), flush=True)
+            # Write response to stdout (only if not None)
+            if response is not None:
+                print(json.dumps(response), flush=True)
             
         except json.JSONDecodeError:
             error_response = {"error": {"code": -32700, "message": "Parse error"}}

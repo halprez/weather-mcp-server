@@ -4,6 +4,7 @@ Mock implementation for now - we'll make it real in the next phase
 """
 
 import asyncio
+import sys
 from datetime import datetime, timedelta
 from typing import Dict, List
 import random
@@ -17,7 +18,7 @@ class EUMETSATClient:
     """
     
     def __init__(self):
-        print("🛰️  EUMETSAT Client initialized (mock mode)")
+        print("🛰️  EUMETSAT Client initialized (mock mode)", file=sys.stderr)
         
     async def get_historical_data(self, 
                                 latitude: float,
@@ -36,8 +37,8 @@ class EUMETSATClient:
         Returns:
             Dictionary with historical weather data
         """
-        print(f"📚 Getting historical data for {latitude}, {longitude}")
-        print(f"📅 Period: {start_date.date()} to {end_date.date()}")
+        print(f"📚 Getting historical data for {latitude}, {longitude}", file=sys.stderr)
+        print(f"📅 Period: {start_date.date()} to {end_date.date()}", file=sys.stderr)
         
         # Generate mock historical data
         data_points = []

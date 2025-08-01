@@ -4,6 +4,7 @@ Connect to real GraphCast AI weather predictions via Open-Meteo
 """
 
 import asyncio
+import sys
 import openmeteo_requests
 from datetime import datetime
 from typing import Dict, List, Tuple, Optional
@@ -18,7 +19,7 @@ class GraphCastClient:
     def __init__(self):
         self.client = openmeteo_requests.Client()
         self.base_url = "https://api.open-meteo.com/v1/forecast"
-        print("🧠 GraphCast Client initialized!")
+        print("🧠 GraphCast Client initialized!", file=sys.stderr)
         
     async def get_7day_forecast(self, 
                                latitude: float, 
@@ -41,7 +42,7 @@ class GraphCastClient:
         Returns:
             Dictionary with forecast data
         """
-        print(f"🔍 Getting GraphCast forecast for {latitude}, {longitude}")
+        print(f"🔍 Getting GraphCast forecast for {latitude}, {longitude}", file=sys.stderr)
         
         try:
             # Prepare API parameters
@@ -67,11 +68,11 @@ class GraphCastClient:
             # Process the response
             processed_data = self._process_response(response)
             
-            print(f"✅ Got {len(processed_data['hourly_data'])} hours of forecast data")
+            print(f"✅ Got {len(processed_data['hourly_data'])} hours of forecast data", file=sys.stderr)
             return processed_data
             
         except Exception as e:
-            print(f"❌ GraphCast API error: {e}")
+            print(f"❌ GraphCast API error: {e}", file=sys.stderr)
             raise Exception(f"Failed to get GraphCast forecast: {e}")
     
     def _process_response(self, response) -> Dict:
