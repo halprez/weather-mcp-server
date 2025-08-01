@@ -102,7 +102,6 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
 
 # Install dependencies
 uv pip install -r requirements.txt
-uv pip install -e .
 ```
 
 ### Environment Setup

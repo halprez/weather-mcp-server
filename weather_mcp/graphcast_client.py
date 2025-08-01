@@ -224,7 +224,7 @@ async def test_graphcast_client():
             print("✅ GraphCast 7-day forecast received!")
             print(f"📍 Location: {forecast['location']['latitude']}, {forecast['location']['longitude']}")
             print(f"🏔️  Elevation: {forecast['location']['elevation']}m")
-            print(f"📊 Total data points: {len(forecast['hourly_data'])}")            cl
+            print(f"📊 Total data points: {len(forecast['hourly_data'])}")   
             print("\n📅 7-Day Weather Forecast:")
             daily_data = client._aggregate_daily_data(forecast['hourly_data'])
             
