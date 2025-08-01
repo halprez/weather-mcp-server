@@ -109,19 +109,6 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
 uv pip install -r requirements.txt
 ```
 
-### Environment Setup
-
-Create `.env` file:
-```env
-# EUMETSAT Configuration
-EUMETSAT_CONSUMER_KEY=your_consumer_key_here
-EUMETSAT_CONSUMER_SECRET=your_consumer_secret_here
-EUMETSAT_BASE_URL=https://api.eumetsat.int
-
-# MCP Server Configuration
-MCP_SERVER_HOST=localhost
-MCP_SERVER_PORT=8080
-```
 
 ## 🖥️ Claude Desktop Integration
 
