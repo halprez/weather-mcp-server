@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "weather-mcp-http": {
+      "command": "uv",
+      "args": [
+        "run", 
+        "python",
+        "-m", 
+        "weather_mcp.http_server",
+        "--host", "127.0.0.1",
+        "--port", "8001"
+      ],
+      "cwd": "/Users/halprez/src/weather-mcp-server"
+    }
+  }
+}

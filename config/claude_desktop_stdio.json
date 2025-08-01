@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "weather-mcp": {
+      "command": "uv",
+      "args": ["run", "python", "-m", "weather_mcp.mcp_server_v2"],
+      "cwd": "/Users/halprez/src/weather-mcp-server"
+    }
+  }
+}

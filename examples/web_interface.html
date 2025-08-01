@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather MCP Web Interface</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e1e8ed;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        
+        button:hover {
+            background: #5a6fd8;
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .result h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        
+        .result pre {
+            white-space: pre-wrap;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #444;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌍 Weather MCP Web Interface</h1>
+        
+        <div id="status" class="status">
+            <span class="spinner"></span> Connecting to Weather MCP server...
+        </div>
+        
+        <div id="main-interface" style="display: none;">
+            <div class="grid">
+                <div class="form-group">
+                    <label for="latitude">Latitude:</label>
+                    <input type="number" id="latitude" value="28.2916" step="0.0001" min="-90" max="90">
+                </div>
+                
+                <div class="form-group">
+                    <label for="longitude">Longitude:</label>
+                    <input type="number" id="longitude" value="-16.6291" step="0.0001" min="-180" max="180">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="tool">Weather Tool:</label>
+                <select id="tool">
+                    <option value="get_graphcast_forecast">🧠 GraphCast AI Forecast</option>
+                    <option value="get_historical_weather">📚 Historical Weather Data</option>
+                    <option value="get_complete_weather_timeline">📈 Complete Weather Timeline</option>
+                </select>
+            </div>
+            
+            <div class="grid" id="options">
+                <div class="form-group">
+                    <label for="days">Forecast Days:</label>
+                    <input type="number" id="days" value="5" min="1" max="16">
+                </div>
+                
+                <div class="form-group">
+                    <label for="days_back">Historical Days:</label>
+                    <input type="number" id="days_back" value="7" min="1" max="30">
+                </div>
+            </div>
+            
+            <button onclick="getWeather()" id="get-weather-btn">
+                🌤️ Get Weather Data
+            </button>
+            
+            <div id="result" style="display: none;"></div>
+        </div>
+        
+        <div class="footer">
+            <p>Powered by Weather MCP HTTP Transport | 
+               <a href="http://localhost:8000/health" target="_blank">Server Health</a> | 
+               <a href="http://localhost:8000/info" target="_blank">Server Info</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const SERVER_URL = 'http://localhost:8000';
+        let requestId = 1;
+        
+        // Initialize the interface
+        async function init() {
+            try {
+                // Check server health
+                const healthResponse = await fetch(`${SERVER_URL}/health`);
+                const healthData = await healthResponse.json();
+                
+                if (healthData.status === 'healthy') {
+                    document.getElementById('status').innerHTML = 
+                        `<div class="status connected">✅ Connected to ${healthData.mcp_server.name} v${healthData.mcp_server.version}</div>`;
+                    document.getElementById('main-interface').style.display = 'block';
+                    
+                    // Initialize MCP connection
+                    await initializeMCP();
+                } else {
+                    throw new Error('Server not healthy');
+                }
+            } catch (error) {
+                document.getElementById('status').innerHTML = 
+                    `<div class="status error">❌ Failed to connect to server: ${error.message}</div>`;
+            }
+        }
+        
+        // Initialize MCP connection
+        async function initializeMCP() {
+            const initRequest = {
+                jsonrpc: "2.0",
+                id: requestId++,
+                method: "initialize",
+                params: {
+                    protocolVersion: "2025-06-18",
+                    capabilities: { tools: {} },
+                    clientInfo: { name: "web-interface", version: "1.0.0" }
+                }
+            };
+            
+            const response = await fetch(`${SERVER_URL}/mcp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(initRequest)
+            });
+            
+            const result = await response.json();
+            console.log('MCP initialized:', result);
+        }
+        
+        // Update form based on selected tool
+        document.getElementById('tool').addEventListener('change', function() {
+            const tool = this.value;
+            const daysInput = document.getElementById('days').parentElement;
+            const daysBackInput = document.getElementById('days_back').parentElement;
+            
+            // Show/hide relevant options
+            if (tool === 'get_graphcast_forecast') {
+                daysInput.style.display = 'block';
+                daysBackInput.style.display = 'none';
+            } else if (tool === 'get_historical_weather') {
+                daysInput.style.display = 'none';
+                daysBackInput.style.display = 'block';
+            } else if (tool === 'get_complete_weather_timeline') {
+                daysInput.style.display = 'block';
+                daysBackInput.style.display = 'block';
+            }
+        });
+        
+        // Get weather data
+        async function getWeather() {
+            const button = document.getElementById('get-weather-btn');
+            const resultDiv = document.getElementById('result');
+            
+            button.disabled = true;
+            button.innerHTML = '<span class="spinner"></span> Loading...';
+            
+            try {
+                const latitude = parseFloat(document.getElementById('latitude').value);
+                const longitude = parseFloat(document.getElementById('longitude').value);
+                const tool = document.getElementById('tool').value;
+                
+                let arguments = { latitude, longitude };
+                
+                // Add tool-specific arguments
+                if (tool === 'get_graphcast_forecast') {
+                    arguments.days = parseInt(document.getElementById('days').value);
+                } else if (tool === 'get_historical_weather') {
+                    arguments.days_back = parseInt(document.getElementById('days_back').value);
+                } else if (tool === 'get_complete_weather_timeline') {
+                    arguments.days = parseInt(document.getElementById('days').value);
+                    arguments.days_back = parseInt(document.getElementById('days_back').value);
+                }
+                
+                const mcpRequest = {
+                    jsonrpc: "2.0",
+                    id: requestId++,
+                    method: "tools/call",
+                    params: {
+                        name: tool,
+                        arguments: arguments
+                    }
+                };
+                
+                const response = await fetch(`${SERVER_URL}/mcp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(mcpRequest)
+                });
+                
+                const result = await response.json();
+                
+                if (result.error) {
+                    throw new Error(result.error.message);
+                }
+                
+                const content = result.result.content[0].text;
+                
+                resultDiv.innerHTML = `
+                    <div class="result">
+                        <h3>🌤️ Weather Data for ${latitude}°, ${longitude}°</h3>
+                        <pre>${content}</pre>
+                    </div>
+                `;
+                resultDiv.style.display = 'block';
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result">
+                        <h3>❌ Error</h3>
+                        <pre>${error.message}</pre>
+                    </div>
+                `;
+                resultDiv.style.display = 'block';
+            } finally {
+                button.disabled = false;
+                button.innerHTML = '🌤️ Get Weather Data';
+            }
+        }
+        
+        // Initialize when page loads
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
