@@ -255,6 +255,33 @@ class EnhancedWeatherMCPServer:
             }
         }
 
+import sys
+import json
+
+async def run_mcp_server():
+    """Run MCP server using stdin/stdout for Claude Desktop"""
+    server = EnhancedWeatherMCPServer()
+    
+    # Read from stdin line by line
+    while True:
+        try:
+            line = sys.stdin.readline()
+            if not line:
+                break
+                
+            request = json.loads(line.strip())
+            response = await server.handle_request(request)
+            
+            # Write response to stdout
+            print(json.dumps(response), flush=True)
+            
+        except json.JSONDecodeError:
+            error_response = {"error": {"code": -32700, "message": "Parse error"}}
+            print(json.dumps(error_response), flush=True)
+        except Exception as e:
+            error_response = {"error": {"code": -1, "message": str(e)}}
+            print(json.dumps(error_response), flush=True)
+
 # Complete test of enhanced MCP server
 async def test_enhanced_server():
     """Test all features of our enhanced MCP server"""
@@ -319,4 +346,7 @@ async def test_enhanced_server():
     print("🚀 Ready for the next phase!")
 
 if __name__ == "__main__":
-    asyncio.run(test_enhanced_server())
+    if len(sys.argv) > 1 and sys.argv[1] == "test":
+        asyncio.run(test_enhanced_server())
+    else:
+        asyncio.run(run_mcp_server())
