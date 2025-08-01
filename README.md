@@ -125,7 +125,11 @@ MCP_SERVER_PORT=8080
 
 ## 🖥️ Claude Desktop Integration
 
-### Step 1: Configure Claude Desktop
+### Step 1: Install Claude Desktop
+
+First, download and install Claude Desktop from the [official Claude Desktop documentation](https://claude.ai/download).
+
+### Step 2: Configure Claude Desktop
 
 Create or edit the MCP configuration file:
 
@@ -144,7 +148,7 @@ Create or edit the MCP configuration file:
 %APPDATA%\Claude\claude_desktop_config.json
 ```
 
-### Step 2: Add Weather MCP Server
+### Step 3: Add Weather MCP Server
 
 Add this configuration to the file:
 
@@ -165,11 +169,11 @@ Add this configuration to the file:
 
 **Important:** Update the paths to match your actual installation directory!
 
-### Step 3: Restart Claude Desktop
+### Step 4: Restart Claude Desktop
 
 Close and reopen Claude Desktop for the changes to take effect.
 
-### Step 4: Test the Integration
+### Step 5: Test the Integration
 
 Ask Claude Desktop natural weather questions:
 
