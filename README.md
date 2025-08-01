@@ -4,6 +4,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GraphCast Integration](https://img.shields.io/badge/AI-GraphCast-green.svg)](https://deepmind.google/discover/blog/graphcast-ai-model-for-faster-and-more-accurate-global-weather-forecasting/)
 [![MCP Protocol](https://img.shields.io/badge/protocol-MCP-orange.svg)](https://modelcontextprotocol.io/)
+[![Beta Version](https://img.shields.io/badge/status-beta-yellow.svg)](https://github.com/your-username/weather-mcp-project)
+[![Work in Progress](https://img.shields.io/badge/development-work%20in%20progress-red.svg)](https://github.com/your-username/weather-mcp-project)
 
 ## 🌟 Project Overview
 
