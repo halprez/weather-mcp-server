@@ -152,8 +152,8 @@ Add this configuration to the file:
 {
   "mcpServers": {
     "weather-mcp": {
-      "command": "/home/alex/src/weather-mcp-server/.venv/bin/python",
-      "args": ["/home/alex/src/weather-mcp-server/weather_mcp/mcp_server_v2.py"],
+      "command": "/your_user_path/weather-mcp-server/.venv/bin/python",
+      "args": ["/your_user_path/weather-mcp-server/weather_mcp/mcp_server_v2.py"],
       "env": {
         "EUMETSAT_CONSUMER_KEY": "your_key_here",
         "EUMETSAT_CONSUMER_SECRET": "your_secret_here"
