@@ -16,6 +16,10 @@ xarray>=2023.6.0
 aiohttp==3.9.1
 asyncio-throttle==1.0.2
 
+# HTTP Server
+fastapi>=0.110.0
+uvicorn[standard]>=0.25.0
+
 # Configuration
 pyyaml==6.0.1
 python-dotenv==1.0.0

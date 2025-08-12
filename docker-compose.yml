@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  # AIFS Model Server
+  aifs-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.aifs
+    container_name: aifs-server
+    ports:
+      - "8080:8080"
+    environment:
+      - MODEL_NAME=ecmwf/aifs-single-1.0
+      - WORKERS=1
+      - LOG_LEVEL=INFO
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - weather-network
+
+  # Weather MCP HTTP Server
+  weather-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile.mcp
+    container_name: weather-mcp
+    ports:
+      - "8081:8081"
+    environment:
+      - AIFS_SERVER_URL=http://aifs-server:8080
+      - AIFS_ENABLED=true
+      - GRAPHCAST_ENABLED=true
+      - ENSEMBLE_ENABLED=true
+      - LOG_LEVEL=INFO
+    depends_on:
+      aifs-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+    networks:
+      - weather-network
+
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: weather-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - weather-network
+
+networks:
+  weather-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+    driver: local

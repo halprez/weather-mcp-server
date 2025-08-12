@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "weather-mcp": {
+      "transport": {
+        "type": "http",
+        "url": "http://localhost:8081/mcp"
+      },
+      "env": {
+        "EUMETSAT_CONSUMER_KEY": "your_eumetsat_key_here",
+        "EUMETSAT_CONSUMER_SECRET": "your_eumetsat_secret_here",
+        "AIFS_SERVER_URL": "http://localhost:8080",
+        "AIFS_ENABLED": "true",
+        "GRAPHCAST_ENABLED": "true",
+        "ENSEMBLE_ENABLED": "true",
+        "LOG_LEVEL": "INFO"
+      }
+    }
+  }
+}

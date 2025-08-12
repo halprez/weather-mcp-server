@@ -1,0 +1,101 @@
+# Weather MCP Server Configuration
+
+server:
+  name: "Enhanced Weather MCP"
+  version: "3.0.0"
+  log_level: "INFO"
+
+# Data source configurations
+data_sources:
+  graphcast:
+    enabled: true
+    provider: "Open-Meteo"
+    base_url: "https://api.open-meteo.com/v1/forecast"
+    timeout: 30
+    cache_hours: 6
+    max_forecast_days: 16
+
+  eumetsat:
+    enabled: true
+    base_url: "https://api.eumetsat.int"
+    timeout: 60
+    retry_attempts: 3
+    max_historical_days: 30
+
+  aifs:
+    enabled: true
+    deployment_mode: "docker"  # options: docker, local
+    docker_url: "http://localhost:8080"
+    local_config_path: "/app/aifs_config.yaml"
+    timeout: 300
+    max_forecast_hours: 720
+
+# Ensemble prediction settings
+ensemble:
+  enabled: true
+  model_weights:
+    aifs: 0.4
+    graphcast: 0.35
+    eumetsat: 0.25
+  
+  methods:
+    - "weighted_average"
+    - "median"
+    - "confidence_weighted"
+  
+  default_method: "weighted_average"
+  quality_threshold: 0.7
+
+# MCP server settings
+mcp:
+  protocol_version: "2025-06-18"
+  capabilities:
+    tools: true
+    logging: true
+  
+  tools:
+    - name: "get_graphcast_forecast"
+      enabled: true
+    - name: "get_historical_weather"
+      enabled: true
+    - name: "get_complete_weather_timeline"
+      enabled: true
+    - name: "get_aifs_forecast"
+      enabled: true
+    - name: "compare_ai_models"
+      enabled: true
+    - name: "get_ensemble_forecast"
+      enabled: true
+
+# Caching settings
+cache:
+  enabled: true
+  ttl_hours: 
+    graphcast: 6
+    eumetsat: 24
+    aifs: 6
+  max_size_mb: 1024
+
+# Data processing settings
+processing:
+  interpolation:
+    method: "linear"
+    max_gap_hours: 6
+  
+  validation:
+    temperature_range: [-60, 60]  # Celsius
+    humidity_range: [0, 100]      # Percentage
+    pressure_range: [870, 1100]   # hPa
+    wind_speed_max: 200           # m/s
+
+# Logging configuration
+logging:
+  level: "INFO"
+  format: "{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}"
+  output: "stderr"
+  
+# Performance settings
+performance:
+  max_concurrent_requests: 10
+  request_timeout: 120
+  memory_limit_mb: 2048

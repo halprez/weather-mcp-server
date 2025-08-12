@@ -1,0 +1,61 @@
+# AIFS Model Server Configuration
+
+server:
+  host: "0.0.0.0"
+  port: 8080
+  workers: 1
+  log_level: "info"
+
+model:
+  name: "aifs-single-1.0"
+  provider: "ECMWF"
+  checkpoint_url: "https://huggingface.co/ecmwf/aifs-single-1.0"
+  cache_dir: "/app/cache"
+  max_forecast_hours: 720  # 30 days max
+
+inference:
+  batch_size: 1
+  timeout_seconds: 600
+  max_concurrent_requests: 5
+  use_gpu: true
+  precision: "mixed"
+
+data:
+  input_source: "opendata"  # ECMWF Open Data
+  output_format: "netcdf"
+  temp_dir: "/tmp"
+  
+grid:
+  resolution: "0.25"  # degrees
+  domain: "global"
+
+variables:
+  surface:
+    - "temperature_2m"
+    - "surface_pressure" 
+    - "wind_speed_10m"
+    - "wind_direction_10m"
+    - "precipitation"
+    - "relative_humidity_2m"
+  
+  pressure_levels:
+    - "geopotential"
+    - "temperature"
+    - "relative_humidity"
+    - "wind_u"
+    - "wind_v"
+  
+  levels: [1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100, 50]
+
+logging:
+  level: "INFO"
+  format: "{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}"
+  
+health_check:
+  enabled: true
+  interval_seconds: 30
+  
+cache:
+  enabled: true
+  ttl_hours: 6
+  max_size_gb: 10

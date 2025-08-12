@@ -1,0 +1,74 @@
+# Dockerfile for AIFS Model Server
+# This container runs the ECMWF AIFS model using anemoi-inference
+
+FROM nvidia/cuda:11.8-devel-ubuntu20.04
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+ENV CUDA_VISIBLE_DEVICES=0
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    python3.10 \
+    python3.10-dev \
+    python3-pip \
+    git \
+    wget \
+    curl \
+    build-essential \
+    libhdf5-dev \
+    libnetcdf-dev \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create symbolic link for python
+RUN ln -sf /usr/bin/python3.10 /usr/bin/python
+
+# Upgrade pip
+RUN python -m pip install --upgrade pip
+
+# Install Python dependencies
+RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
+# Install AIFS dependencies
+RUN pip install \
+    anemoi-inference \
+    anemoi-models \
+    anemoi-training \
+    anemoi-graphs \
+    xarray \
+    netcdf4 \
+    numpy \
+    pandas \
+    fastapi \
+    uvicorn \
+    pydantic \
+    requests \
+    aiohttp \
+    loguru
+
+# Create app directory
+WORKDIR /app
+
+# Copy AIFS server application
+COPY aifs_server.py /app/
+COPY aifs_config.yaml /app/
+
+# Create directories for model cache and data
+RUN mkdir -p /app/models /app/data /app/cache
+
+# Download AIFS model (this would be done at build time)
+# Note: In production, you might want to download during runtime or mount as volume
+ENV HF_HOME=/app/cache
+ENV TRANSFORMERS_CACHE=/app/cache
+
+# Expose port for the AIFS API server
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+# Run the AIFS server
+CMD ["python", "aifs_server.py"]
