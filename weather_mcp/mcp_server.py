@@ -601,8 +601,8 @@ async def run_mcp_server():
     # Run uvicorn server
     config = uvicorn.Config(
         app,
-        host="0.0.0.0",
-        port=8081,
+        host="127.0.0.1",
+        port=8082,
         log_level="info"
     )
     server = uvicorn.Server(config)
@@ -672,8 +672,41 @@ async def test_enhanced_server():
     print("Your Weather MCP Server is working perfectly!")
     print("🚀 Ready for the next phase!")
 
+async def run_stdio_server():
+    """Run MCP server using stdin/stdout for Claude Desktop"""
+    server = WeatherMCPServer()
+    
+    # Read from stdin line by line for Claude Desktop
+    print("🌐 MCP Server running on stdin/stdout...", file=sys.stderr)
+    print("📡 Waiting for requests from Claude Desktop...", file=sys.stderr)
+    
+    while True:
+        try:
+            line = sys.stdin.readline()
+            if not line:
+                break
+                
+            if line.strip():  # Only process non-empty lines
+                request = json.loads(line.strip())
+                response = await server.handle_request(request)
+                
+                # Write response to stdout (only if not None)
+                if response is not None:
+                    print(json.dumps(response), flush=True)
+            
+        except json.JSONDecodeError as e:
+            print(f"❌ JSON decode error: {e}", file=sys.stderr)
+            error_response = {"error": {"code": -32700, "message": "Parse error"}}
+            print(json.dumps(error_response), flush=True)
+        except Exception as e:
+            print(f"❌ Server error: {e}", file=sys.stderr)
+            error_response = {"error": {"code": -1, "message": str(e)}}
+            print(json.dumps(error_response), flush=True)
+
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "test":
         asyncio.run(test_enhanced_server())
+    elif len(sys.argv) > 1 and sys.argv[1] == "stdio":
+        asyncio.run(run_stdio_server())
     else:
         asyncio.run(run_mcp_server())

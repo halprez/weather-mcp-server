@@ -10,9 +10,13 @@
 
 ## 🌟 Project Overview
 
-This project creates the world's most advanced weather data platform, seamlessly integrating **historical meteorological data** from EUMETSAT with **dual AI-powered weather forecasts** from both Google's GraphCast and ECMWF's cutting-edge AIFS models. Built on the Model Context Protocol (MCP), it provides intelligent weather analysis capabilities through a unified API with ensemble predictions and model comparison tools.
+This project creates and advanced weather data platform, seamlessly integrating **historical meteorological data** from EUMETSAT with **dual AI-powered weather forecasts** from both Google's GraphCast and ECMWF's AIFS models. Built on the Model Context Protocol (MCP), it provides intelligent weather analysis capabilities through a unified API with ensemble predictions and model comparison tools.
 
 The core `WeatherMCPServer` class provides 6 advanced tools for comprehensive weather analysis, from individual AI model forecasts to sophisticated ensemble predictions that combine multiple data sources.
+
+**🚀 Dual Transport Support:**
+- **📡 stdin/stdout**: Perfect for Claude Desktop integration (recommended)
+- **🌐 HTTP**: Ideal for standalone API usage and development
 
 ### Key Concepts
 
@@ -22,7 +26,7 @@ MCP is awesome!! Follow [MCP official documentation](https://modelcontextprotoco
 
 - **🛰️ Historical Precision**: EUMETSAT satellite data (MSG/SEVIRI, Meteosat) with comprehensive historical coverage.
 - **🧠 Dual AI Models**: Google GraphCast + ECMWF AIFS integration
-- **🚀 ECMWF AIFS**: Latest AI forecasting system from European weather authority
+- **🚀 ECMWF AIFS**: Latest AI forecasting system from ECMWF
 - **🔬 Model Comparison**: Side-by-side analysis of AIFS vs GraphCast predictions
 - **🌟 Ensemble Forecasting**: Multi-model predictions for enhanced accuracy
 - **⚡ Ultra-Fast Processing**: AI forecasts in under 1 minute vs 50+ minutes for traditional NWP models.
@@ -121,37 +125,53 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
 uv pip install -r requirements.txt
 ```
 
-### 2. Launch the Application
+### 2. Choose Your Deployment Mode
 
-**🚀 Quick Start with Make (Recommended)**
+**📡 For Claude Desktop Integration (stdin/stdout)**
 ```bash
-# Install dependencies and run HTTP server
+# Just install dependencies - Claude Desktop handles the rest
+make install
+
+# Test the application
+make test
+```
+
+**🌐 For HTTP API/Development (standalone server)**
+```bash
+# Install and run HTTP server
 make install
 make run
 
 # Or deploy full Docker stack
 make build
 make deploy
-
-# Run tests
-make test
 ```
 
 **📋 Alternative Methods**
 ```bash
 # Using run script
 ./run.sh docker   # Complete Docker stack
-./run.sh http     # HTTP server only
+./run.sh http     # HTTP server only  
 ./run.sh test     # Run tests
 
 # Manual commands
-docker-compose up --build              # Docker stack
-python weather_mcp/mcp_server.py       # HTTP server
+docker-compose up --build                    # Docker stack
+python weather_mcp/mcp_server.py             # HTTP server
+python weather_mcp/mcp_server.py stdio       # stdin/stdout mode
 ```
 
 ### 3. Verify Deployment
 
-**🔧 Using Make Commands**
+**📡 For Claude Desktop (stdin/stdout mode)**
+```bash
+# Test stdin/stdout mode
+echo '{"method": "tools/list", "id": 1}' | python weather_mcp/mcp_server.py stdio
+
+# Test with Claude Desktop
+# Ask Claude: "What weather tools are available?"
+```
+
+**🌐 For HTTP Server Mode**
 ```bash
 # Check system status
 make check
@@ -159,20 +179,10 @@ make check
 # Check service health
 make health
 
-# Get project info
-make info
-```
-
-**📡 Manual Health Checks**
-```bash
-# Check MCP HTTP server health
-curl http://localhost:8081/health
-
-# Check AIFS server (if using Docker)
-curl http://localhost:8080/health
-
-# List available MCP tools
-curl http://localhost:8081/tools
+# Manual health checks
+curl http://localhost:8081/health                    # MCP server
+curl http://localhost:8080/health                    # AIFS server (if using Docker)
+curl http://localhost:8081/tools                     # List tools
 
 # Test MCP endpoint
 curl -X POST http://localhost:8081/mcp \
@@ -254,46 +264,49 @@ Create or edit the MCP configuration file:
 
 ### Step 3: Add Weather MCP Server
 
-**🌐 HTTP Transport (Recommended)**
+**📡 Stdin/Stdout Transport (Recommended)**
 
-Use the provided configuration file for HTTP transport:
-
-```bash
-# Copy the ready-made configuration
-cp claude_desktop_config.json ~/.config/Claude/claude_desktop_config.json
-
-# Or manually add this configuration:
-```
+Add this configuration to your Claude Desktop config:
 
 ```json
 {
   "mcpServers": {
     "weather-mcp": {
-      "transport": {
-        "type": "http",
-        "url": "http://localhost:8081/mcp"
-      },
+      "command": "/path/to/weather-mcp-server/.venv/bin/python",
+      "args": ["/path/to/weather-mcp-server/weather_mcp/mcp_server.py", "stdio"],
       "env": {
-        "EUMETSAT_CONSUMER_KEY": "your_key_here",
-        "EUMETSAT_CONSUMER_SECRET": "your_secret_here",
-        "AIFS_SERVER_URL": "http://localhost:8080",
+        "PATH": "/path/to/weather-mcp-server/.venv/bin:/usr/local/bin:/usr/bin:/bin",
         "AIFS_ENABLED": "true",
         "GRAPHCAST_ENABLED": "true",
-        "ENSEMBLE_ENABLED": "true",
-        "LOG_LEVEL": "INFO"
+        "ENSEMBLE_ENABLED": "true"
       }
     }
   }
 }
 ```
 
-**✅ Prerequisites:** Make sure the HTTP server is running first:
+**⚠️ Important:** Update the paths to match your actual installation directory!
+
+**Example for typical installation:**
 ```bash
-# Start HTTP server before using Claude Desktop
-./run.sh http
-# Or with Docker:
-./run.sh docker
+# If installed in /home/username/weather-mcp-server/
+{
+  "mcpServers": {
+    "weather-mcp": {
+      "command": "/home/username/weather-mcp-server/.venv/bin/python",
+      "args": ["/home/username/weather-mcp-server/weather_mcp/mcp_server.py", "stdio"],
+      "env": {
+        "PATH": "/home/username/weather-mcp-server/.venv/bin:/usr/local/bin:/usr/bin:/bin",
+        "AIFS_ENABLED": "true",
+        "GRAPHCAST_ENABLED": "true",
+        "ENSEMBLE_ENABLED": "true"
+      }
+    }
+  }
+}
 ```
+
+**✅ No server startup required:** Claude Desktop will automatically launch the MCP server when needed.
 
 ### Step 4: Restart Claude Desktop
 
@@ -591,7 +604,7 @@ ensemble:
     eumetsat: 0.2  # Historical validation
 ```
 
-## 🎯 AIFS Integration Complete!
+## 🎯 AIFS Integration
 
 ### ✅ What's Implemented
 
@@ -647,11 +660,6 @@ This platform enables:
 - 🔌 Claude Desktop not connecting → Verify file paths in config
 - 📊 Mock data being used → Ensure Docker containers are running
 
-**Getting Support:**
-- 📝 Create an issue on GitHub
-- 💬 Check existing issues and discussions
-- 📧 Review logs in `docker-compose logs -f`
-
 ### 🙏 Acknowledgments
 
 - **ECMWF** for the groundbreaking AIFS model
@@ -671,4 +679,4 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
-**🌟 Ready to revolutionize weather forecasting with AI! Deploy now and experience the future of meteorology. 🚀**
+**🌟 Built with real passion! 🚀**
